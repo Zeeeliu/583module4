@@ -80,9 +80,8 @@ def convert_leaves(primes_list):
     leaves = []
     for prime in primes_list:
         # Convert integer to bytes32 format (32 bytes, big-endian)
-        prime_bytes = int.to_bytes(prime, 32, 'big')
-        # Hash it using keccak256 to get bytes32 leaf
-        leaf = Web3.solidity_keccak(['uint256'], [prime])
+        # The leaves are the primes themselves, not hashed
+        leaf = int.to_bytes(prime, 32, 'big')
         leaves.append(leaf)
 
     return leaves
@@ -110,8 +109,9 @@ def build_merkle(leaves):
                 parent = hash_pair(current_level[i], current_level[i + 1])
                 next_level.append(parent)
             else:
-                # Odd number of nodes, duplicate it for next level
-                next_level.append(current_level[i])
+                # Odd number of nodes, hash it with itself
+                parent = hash_pair(current_level[i], current_level[i])
+                next_level.append(parent)
         tree.append(next_level)
         current_level = next_level
 
@@ -141,9 +141,12 @@ def prove_merkle(merkle_tree, random_indx):
             # Current node is right child, sibling is left
             sibling_index = current_index - 1
         
-        # Add sibling to proof if it exists
+        # Add sibling to proof
         if sibling_index < len(current_level):
             merkle_proof.append(current_level[sibling_index])
+        else:
+            # No sibling exists (node is odd one out), use the node itself
+            merkle_proof.append(current_level[current_index])
         
         # Move to parent index for next level
         current_index = current_index // 2
