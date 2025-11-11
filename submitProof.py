@@ -100,7 +100,7 @@ def build_merkle(leaves):
     tree = [leaves]
     
     # Build the tree level by level
-    current_level = leaves
+    current_level = leaves[:]
     while len(current_level) > 1:
         next_level = []
         # Process pairs
@@ -108,10 +108,10 @@ def build_merkle(leaves):
             if i + 1 < len(current_level):
                 # Hash the pair
                 parent = hash_pair(current_level[i], current_level[i + 1])
+                next_level.append(parent)
             else:
-                # Odd number of nodes, promote the last one
-                parent = current_level[i]
-            next_level.append(parent)
+                # Odd number of nodes, duplicate it for next level
+                next_level.append(current_level[i])
         tree.append(next_level)
         current_level = next_level
 
